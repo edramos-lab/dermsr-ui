@@ -20,6 +20,8 @@
   header { padding: 28px 32px 12px; }
   header h1 { margin: 0 0 4px; font-size: 1.6rem; }
   header p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+  .header-row { display: flex; align-items: center; gap: 18px; }
+  .uabc-logo { height: 64px; width: auto; flex-shrink: 0; }
   main { padding: 0 32px 48px; max-width: 1180px; margin: 0 auto; }
   .card {
     background: var(--card); border: 1px solid var(--border); border-radius: 10px;
@@ -66,10 +68,13 @@
 </style>
 </head>
 <body>
-<header>
-  <h1>DERMS-R Analysis</h1>
-  <p>Upload a training-log JSON (one row per architecture &times; dataset ratio) to score every candidate with
-     DERMS-R and run the full statistical comparison.</p>
+<header class="header-row">
+  <img src="uabc_logo.png" alt="Universidad Aut&oacute;noma de Baja California" class="uabc-logo">
+  <div>
+    <h1>DERMS-R Analysis</h1>
+    <p>Upload a training-log JSON (one row per architecture &times; dataset ratio) to score every candidate with
+       DERMS-R and run the full statistical comparison.</p>
+  </div>
 </header>
 <main>
 
