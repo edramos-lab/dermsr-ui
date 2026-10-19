@@ -4,3 +4,4 @@ uvicorn[standard]>=0.29,<1
 python-multipart>=0.0.9,<1
 scipy>=1.8
 matplotlib>=3.8,<4
+adjustText>=1.1,<2

@@ -16,6 +16,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from adjustText import adjust_text
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import Normalize
 
@@ -96,10 +97,8 @@ def _optimal(optimal: list[dict]) -> plt.Figure:
     cmap = plt.get_cmap("viridis")
     sizes = 60 + (scores - scores.min()) / max(1e-9, (scores.max() - scores.min())) * 600
 
-    fig, ax = plt.subplots(figsize=(8, 5.5), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(8, 5.5))
     sc = ax.scatter(params, acc, s=sizes, c=scores, cmap=cmap, norm=norm, alpha=0.88, edgecolor="white", linewidth=1.1)
-    for p, a, name in zip(params, acc, names):
-        ax.annotate(name, (p, a), textcoords="offset points", xytext=(0, 9), fontsize=7.5, color="dimgray", ha="center")
     ax.set_xscale("log")
     ax.set_xlabel("Trainable parameters (log scale)")
     ax.set_ylabel("Mean validation accuracy (%)")
@@ -107,6 +106,21 @@ def _optimal(optimal: list[dict]) -> plt.Figure:
     ax.grid(True, which="both", alpha=0.25)
     cbar = fig.colorbar(ScalarMappable(norm=norm, cmap=cmap), ax=ax)
     cbar.set_label("DERMS-R (raw)")
+
+    # Points this close together (e.g. the 95-98% accuracy / 20-45M
+    # parameter cluster in the CIFAR-10 example) have overlapping default
+    # labels; adjust_text repels them apart and draws a leader line back
+    # to the actual point, which a fixed offset cannot do for an arbitrary
+    # uploaded dataset's cluster shape.
+    texts = [
+        ax.text(p, a, name, fontsize=7.5, color="dimgray") for p, a, name in zip(params, acc, names)
+    ]
+    adjust_text(
+        texts, x=list(params), y=list(acc), ax=ax,
+        arrowprops=dict(arrowstyle="-", color="gray", lw=0.5, shrinkA=3, shrinkB=3),
+        expand_axes=True,
+    )
+    fig.tight_layout()
     return fig
 
 

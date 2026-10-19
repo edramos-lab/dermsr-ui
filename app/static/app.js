@@ -214,15 +214,62 @@ function renderPerArchitecture(rows) {
 // ---------------------------------------------------------------------
 // 5. DERMS-R at each architecture's optimal ratio
 // ---------------------------------------------------------------------
+// Points that sit close together (e.g. the 95-98%-accuracy /
+// 20-45M-parameter cluster in the CIFAR-10 example) all default to "top
+// center" and their labels run into each other. For each point, push its
+// label away from the centroid of whichever other points are nearby (in
+// log-params/accuracy space, min-max normalized so neither axis dominates),
+// landing on whichever of Plotly's 8 compass textpositions matches that
+// direction; isolated points keep the "top center" default.
+function computeTextPositions(xs, ys) {
+  const logX = xs.map((x) => Math.log10(x));
+  const norm = (arr) => {
+    const lo = Math.min(...arr), hi = Math.max(...arr);
+    const span = hi - lo || 1;
+    return arr.map((v) => (v - lo) / span);
+  };
+  const nx = norm(logX);
+  const ny = norm(ys);
+  const threshold = 0.18;
+
+  return xs.map((_, i) => {
+    let pushX = 0, pushY = 0, neighbors = 0;
+    for (let j = 0; j < xs.length; j++) {
+      if (j === i) continue;
+      const dx = nx[i] - nx[j], dy = ny[i] - ny[j];
+      const dist = Math.hypot(dx, dy);
+      if (dist < threshold) {
+        const w = (threshold - dist) / threshold;
+        pushX += dx * w;
+        pushY += dy * w;
+        neighbors++;
+      }
+    }
+    if (neighbors === 0 || Math.hypot(pushX, pushY) < 1e-6) return "top center";
+    const angle = (Math.atan2(pushY, pushX) * 180) / Math.PI; // -180..180, 0=east
+    const v = angle >= -22.5 && angle < 22.5 ? "middle right"
+      : angle >= 22.5 && angle < 67.5 ? "top right"
+      : angle >= 67.5 && angle < 112.5 ? "top center"
+      : angle >= 112.5 && angle < 157.5 ? "top left"
+      : angle >= 157.5 || angle < -157.5 ? "middle left"
+      : angle >= -157.5 && angle < -112.5 ? "bottom left"
+      : angle >= -112.5 && angle < -67.5 ? "bottom center"
+      : "bottom right";
+    return v;
+  });
+}
+
 function renderOptimal(optimal) {
   document.getElementById("optimalSection").classList.remove("hidden");
+  const paramsArr = optimal.map((o) => o.n_parameters);
+  const accArr = optimal.map((o) => o.mean_val_accuracy * 100);
   const trace = {
     type: "scatter",
     mode: "markers+text",
-    x: optimal.map((o) => o.n_parameters),
-    y: optimal.map((o) => o.mean_val_accuracy * 100),
+    x: paramsArr,
+    y: accArr,
     text: optimal.map((o) => o.architecture),
-    textposition: "top center",
+    textposition: computeTextPositions(paramsArr, accArr),
     textfont: { size: 9, color: "#555" },
     marker: {
       size: optimal.map((o) => o.derms_r_raw),
