@@ -4,11 +4,15 @@ A web UI for [DERMS-R](https://github.com/edramos-lab/dermsr) analysis. Upload a
 training-log JSON file (one row per architecture &times; dataset-ratio pair) and get:
 
 - A results table (accuracy, parameter count, standard deviation, dataset ratio, DERMS-R
-  raw and normalized score).
+  raw and normalized score) -- downloadable as CSV or XLSX.
 - A radar-chart grid, one panel per architecture, at its own optimal dataset ratio.
 - A DERMS-R-per-architecture bar chart across every evaluated ratio.
 - A scatter plot of DERMS-R at each architecture's optimal operating point.
 - Friedman test + Nemenyi critical-difference statistical comparison across architectures.
+
+Every chart has a **PNG (300 DPI)** and **PDF (vector)** download button, rendered server-side
+with matplotlib specifically for that export (not a screenshot of the on-screen interactive
+chart), so the downloaded file is suitable for direct inclusion in a paper.
 
 All scoring and statistics are computed by the [`dermsr`](https://github.com/edramos-lab/dermsr)
 reference implementation (pinned to `v0.1.0`) -- this repo only provides the upload/visualization
@@ -51,7 +55,9 @@ Common alternate column names are accepted automatically: `ratio`/`num_parameter
 `mean_validation_accuracy`/`sd_validation_accuracy` (matching the `derms-r` benchmark pipeline's
 own CSV export naming).
 
-Click **Load example data** in the running app to download a real file in this exact schema.
+Click **Load example data** in the running app to try the tool immediately against a real file in
+this exact schema (the paper's own CIFAR-10 benchmark), or fetch it directly via `GET /api/example`
+to use as a download/template.
 
 ## Development (without Docker)
 

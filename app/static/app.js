@@ -1,4 +1,5 @@
 let selectedFile = null;
+let lastAnalyzedFile = null; // re-sent to /api/export/figure, which recomputes server-side
 
 const statusEl = document.getElementById("status");
 const analyzeBtn = document.getElementById("analyzeBtn");
@@ -43,7 +44,9 @@ async function runAnalysis(file) {
     const resp = await fetch("/api/analyze", { method: "POST", body: form });
     const payload = await resp.json();
     if (!resp.ok) throw new Error(payload.detail || `Request failed (${resp.status})`);
+    lastAnalyzedFile = file;
     render(payload);
+    setDownloadsEnabled(true);
     setStatus(`Analyzed ${payload.rows.length} rows across ${payload.optimal.length} architecture(s).`);
   } catch (err) {
     setStatus(String(err), true);
@@ -289,9 +292,12 @@ function renderStatistics(stats) {
       : "No architecture pair differs by more than the critical difference at this sample size.");
   container.appendChild(note);
 
+  container.appendChild(chartHead("Average rank", "ranks"));
   const rankDiv = document.createElement("div");
   rankDiv.id = "rankChart";
   container.appendChild(rankDiv);
+
+  container.appendChild(chartHead("Critical-difference diagram", "cd"));
   const cdDiv = document.createElement("div");
   cdDiv.id = "cdDiagram";
   container.appendChild(cdDiv);
@@ -389,3 +395,114 @@ function renderCdDiagram(sortedRanks, cd, k) {
     { displaylogo: false, responsive: true }
   );
 }
+
+// ---------------------------------------------------------------------
+// Downloads: table as CSV/XLSX (client-side), charts as 300 DPI PNG /
+// vector PDF (server-side matplotlib re-render via /api/export/figure,
+// so the file is actually paper-quality, not a screenshot of the
+// on-screen interactive chart).
+// ---------------------------------------------------------------------
+function setDownloadsEnabled(enabled) {
+  document.querySelectorAll(".dl-btn").forEach((btn) => (btn.disabled = !enabled));
+}
+
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function tableExportRows() {
+  // Raw values, not the table's display formatting (percent strings etc.)
+  // -- a CSV/XLSX meant for further analysis should stay numeric.
+  return tableRows.map((row) => {
+    const out = {};
+    TABLE_COLUMNS.forEach((col) => (out[col.label] = row[col.key]));
+    return out;
+  });
+}
+
+function downloadCsv() {
+  const rows = tableExportRows();
+  if (!rows.length) return;
+  const headers = Object.keys(rows[0]);
+  const lines = [headers.join(",")];
+  rows.forEach((row) => {
+    lines.push(headers.map((h) => row[h]).join(","));
+  });
+  triggerDownload(new Blob([lines.join("\n")], { type: "text/csv" }), "dermsr_results.csv");
+}
+
+function downloadXlsx() {
+  const rows = tableExportRows();
+  if (!rows.length) return;
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "DERMS-R results");
+  XLSX.writeFile(wb, "dermsr_results.xlsx");
+}
+
+async function downloadFigure(name, fmt, btn) {
+  if (!lastAnalyzedFile) return;
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "...";
+  try {
+    const form = new FormData();
+    form.append("file", lastAnalyzedFile);
+    const resp = await fetch(`/api/export/figure?name=${name}&format=${fmt}`, { method: "POST", body: form });
+    if (!resp.ok) {
+      const payload = await resp.json().catch(() => ({}));
+      throw new Error(payload.detail || `Export failed (${resp.status})`);
+    }
+    const blob = await resp.blob();
+    triggerDownload(blob, `dermsr_${name}.${fmt}`);
+  } catch (err) {
+    setStatus(String(err), true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+function figureButtons(name) {
+  const frag = document.createDocumentFragment();
+  ["png", "pdf"].forEach((fmt) => {
+    const btn = document.createElement("button");
+    btn.className = "dl-btn";
+    btn.disabled = !lastAnalyzedFile;
+    btn.textContent = fmt === "png" ? "PNG (300 dpi)" : "PDF (vector)";
+    btn.addEventListener("click", () => downloadFigure(name, fmt, btn));
+    frag.appendChild(btn);
+  });
+  return frag;
+}
+
+function chartHead(title, figureName) {
+  const head = document.createElement("div");
+  head.className = "chart-head";
+  const h = document.createElement("h3");
+  h.textContent = title;
+  const row = document.createElement("div");
+  row.className = "dl-row";
+  row.appendChild(figureButtons(figureName));
+  head.appendChild(h);
+  head.appendChild(row);
+  return head;
+}
+
+document.querySelectorAll("[data-download]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    if (btn.dataset.download === "csv") downloadCsv();
+    if (btn.dataset.download === "xlsx") downloadXlsx();
+  });
+});
+
+document.querySelectorAll(".dl-row[data-figure]").forEach((row) => {
+  row.appendChild(figureButtons(row.dataset.figure));
+});

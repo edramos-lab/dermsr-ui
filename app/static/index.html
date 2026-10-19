@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DERMS-R Analysis</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
   :root {
     --bg: #f7f7f5; --card: #ffffff; --border: #e2e2df; --text: #1f2321;
@@ -26,6 +27,15 @@
   }
   .card h2 { margin: 0 0 14px; font-size: 1.05rem; }
   .card h3 { margin: 0 0 10px; font-size: 0.95rem; color: var(--muted); font-weight: 600; }
+  .section-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+  .dl-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .dl-btn {
+    background: transparent; color: var(--accent); border: 1px solid var(--accent);
+    border-radius: 5px; padding: 4px 10px; font-size: 0.78rem; cursor: pointer; font-weight: 500;
+  }
+  .dl-btn:hover { background: var(--accent); color: white; }
+  .dl-btn:disabled { opacity: 0.4; cursor: wait; }
+  .chart-head { display: flex; justify-content: space-between; align-items: baseline; margin: 18px 0 4px; }
   .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
   button, .file-label {
     background: var(--accent); color: white; border: none; border-radius: 6px;
@@ -74,7 +84,13 @@
   </section>
 
   <section class="card hidden" id="tableSection">
-    <h2>2. Results table</h2>
+    <div class="section-head">
+      <h2>2. Results table</h2>
+      <div class="dl-row">
+        <button class="dl-btn" data-download="csv">Download CSV</button>
+        <button class="dl-btn" data-download="xlsx">Download XLSX</button>
+      </div>
+    </div>
     <div class="table-wrap">
       <table id="resultsTable">
         <thead><tr></tr></thead>
@@ -84,17 +100,26 @@
   </section>
 
   <section class="card hidden" id="radarSection">
-    <h2>3. Component radar profiles (at each architecture's optimal ratio)</h2>
+    <div class="section-head">
+      <h2>3. Component radar profiles (at each architecture's optimal ratio)</h2>
+      <div class="dl-row" data-figure="radar"></div>
+    </div>
     <div id="radarGrid"></div>
   </section>
 
   <section class="card hidden" id="perArchSection">
-    <h2>4. DERMS-R per architecture (all evaluated ratios)</h2>
+    <div class="section-head">
+      <h2>4. DERMS-R per architecture (all evaluated ratios)</h2>
+      <div class="dl-row" data-figure="per_architecture"></div>
+    </div>
     <div id="perArchChart"></div>
   </section>
 
   <section class="card hidden" id="optimalSection">
-    <h2>5. DERMS-R at each architecture's optimal ratio</h2>
+    <div class="section-head">
+      <h2>5. DERMS-R at each architecture's optimal ratio</h2>
+      <div class="dl-row" data-figure="optimal"></div>
+    </div>
     <div id="optimalChart"></div>
   </section>
 
