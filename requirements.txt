@@ -1,0 +1,5 @@
+dermsr @ git+https://github.com/edramos-lab/dermsr.git@v0.1.0
+fastapi>=0.110,<1
+uvicorn[standard]>=0.29,<1
+python-multipart>=0.0.9,<1
+scipy>=1.8

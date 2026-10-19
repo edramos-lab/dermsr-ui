@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DERMS-R Analysis</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --bg: #f7f7f5; --card: #ffffff; --border: #e2e2df; --text: #1f2321;
+    --muted: #6b6f6c; --accent: #1b5e4f; --accent-dark: #123f36;
+    --danger: #8c2f2f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  header { padding: 28px 32px 12px; }
+  header h1 { margin: 0 0 4px; font-size: 1.6rem; }
+  header p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+  main { padding: 0 32px 48px; max-width: 1180px; margin: 0 auto; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px 24px; margin-bottom: 24px;
+  }
+  .card h2 { margin: 0 0 14px; font-size: 1.05rem; }
+  .card h3 { margin: 0 0 10px; font-size: 0.95rem; color: var(--muted); font-weight: 600; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  button, .file-label {
+    background: var(--accent); color: white; border: none; border-radius: 6px;
+    padding: 9px 16px; font-size: 0.9rem; cursor: pointer; font-weight: 500;
+  }
+  button:hover, .file-label:hover { background: var(--accent-dark); }
+  button.secondary { background: #e6e6e3; color: var(--text); }
+  button.secondary:hover { background: #d8d8d4; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  input[type=file] { display: none; }
+  #status { font-size: 0.88rem; color: var(--muted); margin-top: 10px; min-height: 1.2em; }
+  #status.error { color: var(--danger); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  th, td { padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child { text-align: left; }
+  th { cursor: pointer; user-select: none; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  th:hover { color: var(--text); }
+  tbody tr:hover { background: #fafaf8; }
+  .table-wrap { max-height: 420px; overflow-y: auto; }
+  .hidden { display: none !important; }
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stat-box { background: #fafaf8; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; }
+  .stat-box .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+  .stat-box .value { font-size: 1.25rem; font-weight: 600; }
+  .note { font-size: 0.85rem; color: var(--muted); margin-top: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>DERMS-R Analysis</h1>
+  <p>Upload a training-log JSON (one row per architecture &times; dataset ratio) to score every candidate with
+     DERMS-R and run the full statistical comparison.</p>
+</header>
+<main>
+
+  <section class="card">
+    <h2>1. Load data</h2>
+    <div class="row">
+      <label class="file-label">Choose JSON file<input type="file" id="fileInput" accept="application/json"></label>
+      <button class="secondary" id="exampleBtn">Load example data (CIFAR-10 benchmark)</button>
+      <button id="analyzeBtn" disabled>Run DERMS-R analysis</button>
+    </div>
+    <div id="status"></div>
+  </section>
+
+  <section class="card hidden" id="tableSection">
+    <h2>2. Results table</h2>
+    <div class="table-wrap">
+      <table id="resultsTable">
+        <thead><tr></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card hidden" id="radarSection">
+    <h2>3. Component radar profiles (at each architecture's optimal ratio)</h2>
+    <div id="radarGrid"></div>
+  </section>
+
+  <section class="card hidden" id="perArchSection">
+    <h2>4. DERMS-R per architecture (all evaluated ratios)</h2>
+    <div id="perArchChart"></div>
+  </section>
+
+  <section class="card hidden" id="optimalSection">
+    <h2>5. DERMS-R at each architecture's optimal ratio</h2>
+    <div id="optimalChart"></div>
+  </section>
+
+  <section class="card hidden" id="statsSection">
+    <h2>6. Statistical analysis (Friedman test &amp; Nemenyi critical difference)</h2>
+    <div id="statsContent"></div>
+  </section>
+
+</main>
+<script src="app.js"></script>
+</body>
+</html>

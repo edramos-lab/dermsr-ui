@@ -1,0 +1,7 @@
+services:
+  dermsr-ui:
+    build: .
+    image: dermsr-ui:latest
+    ports:
+      - "8090:8090"
+    restart: unless-stopped
